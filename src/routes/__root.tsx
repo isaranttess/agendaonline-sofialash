@@ -82,9 +82,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Agende seu horário de extensão de cílios com Sofia Emanoela. Volume brasileiro, russo, efeito fox, coreano e muito mais." },
       { name: "author", content: "Sofia Emanoela" },
       { property: "og:title", content: "Sofia Emanoela — Espaço Estética Lash" },
-      { property: "og:description", content: "Agende online seu horário de extensão de cílios." },
+      { property: "og:description", content: "Agende seu horário de extensão de cílios com Sofia Emanoela. Volume brasileiro, russo, efeito fox, coreano e muito mais." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Sofia Emanoela — Espaço Estética Lash" },
+      { name: "twitter:description", content: "Agende seu horário de extensão de cílios com Sofia Emanoela. Volume brasileiro, russo, efeito fox, coreano e muito mais." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0e6eaf36-a845-49e9-ad6d-f946664a9a9a/id-preview-ba4863b1--ac81025e-6453-4648-b121-9f5e753190dd.lovable.app-1782876515000.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/0e6eaf36-a845-49e9-ad6d-f946664a9a9a/id-preview-ba4863b1--ac81025e-6453-4648-b121-9f5e753190dd.lovable.app-1782876515000.png" },
     ],
     links: [
       {
