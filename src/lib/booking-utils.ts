@@ -22,37 +22,40 @@ export function toDateString(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export type SlotStatus = "available" | "booked" | "disabled" | "past" | "conflict";
+
 /**
- * Compute available start times for a day.
- * - openTime/closeTime "HH:MM"
- * - duration in minutes
- * - taken: array of {start_time, end_time} already booked (confirmed)
- * - stepMinutes: increment between candidate slots
+ * Compute slot statuses for a specific date from a fixed template of slot times.
+ * - templateTimes: "HH:MM" strings (that day's weekly template)
+ * - duration: minutes the candidate service takes
+ * - taken: confirmed appointments on that date
+ * - disabled: slot times manually disabled by admin
+ * - conflict = another confirmed booking overlaps this slot (so not offerable)
  */
-export function computeSlots(
-  openTime: string,
-  closeTime: string,
+export function computeSlotStatuses(
+  templateTimes: string[],
   duration: number,
   taken: { start_time: string; end_time: string }[],
-  stepMinutes = 30,
-  now?: Date,
+  disabled: string[],
   isToday = false,
-): string[] {
-  const openMin = timeToMinutes(openTime);
-  const closeMin = timeToMinutes(closeTime);
-  const nowMin = now ? now.getHours() * 60 + now.getMinutes() : 0;
-
+  now: Date = new Date(),
+): { time: string; status: SlotStatus }[] {
+  const nowMin = now.getHours() * 60 + now.getMinutes();
   const busy = taken.map((t) => ({
     start: timeToMinutes(t.start_time.slice(0, 5)),
     end: timeToMinutes(t.end_time.slice(0, 5)),
   }));
+  const disabledSet = new Set(disabled.map((d) => d.slice(0, 5)));
 
-  const slots: string[] = [];
-  for (let m = openMin; m + duration <= closeMin; m += stepMinutes) {
-    if (isToday && m <= nowMin) continue;
-    const slotEnd = m + duration;
-    const overlap = busy.some((b) => m < b.end && slotEnd > b.start);
-    if (!overlap) slots.push(minutesToTime(m));
-  }
-  return slots;
+  return templateTimes.map((t) => {
+    const time = t.slice(0, 5);
+    const start = timeToMinutes(time);
+    const end = start + duration;
+    let status: SlotStatus = "available";
+    if (isToday && start <= nowMin) status = "past";
+    else if (disabledSet.has(time)) status = "disabled";
+    else if (busy.some((b) => start === b.start)) status = "booked";
+    else if (busy.some((b) => start < b.end && end > b.start)) status = "conflict";
+    return { time, status };
+  });
 }

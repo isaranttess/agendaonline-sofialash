@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Sparkles } from "lucide-react";
 import AppointmentsTab from "./AppointmentsTab";
 import ServicesTab from "./ServicesTab";
-import HoursTab from "./HoursTab";
+import SlotsTab from "./SlotsTab";
 import BlockedDatesTab from "./BlockedDatesTab";
 
 export default function AdminDashboard({ onSignOut }: { onSignOut: () => Promise<void> }) {
@@ -31,12 +31,12 @@ export default function AdminDashboard({ onSignOut }: { onSignOut: () => Promise
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
             <TabsTrigger value="appointments">Agendamentos</TabsTrigger>
             <TabsTrigger value="services">Serviços</TabsTrigger>
-            <TabsTrigger value="hours">Horários</TabsTrigger>
+            <TabsTrigger value="slots">Horários</TabsTrigger>
             <TabsTrigger value="blocked">Folgas</TabsTrigger>
           </TabsList>
           <TabsContent value="appointments" className="mt-6"><AppointmentsTab /></TabsContent>
           <TabsContent value="services" className="mt-6"><ServicesTab /></TabsContent>
-          <TabsContent value="hours" className="mt-6"><HoursTab /></TabsContent>
+          <TabsContent value="slots" className="mt-6"><SlotsTab /></TabsContent>
           <TabsContent value="blocked" className="mt-6"><BlockedDatesTab /></TabsContent>
         </Tabs>
       </main>

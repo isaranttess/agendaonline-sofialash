@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Calendar as CalIcon, Check, Clock, Loader2, Phone, User } from "lucide-react";
 import { toast } from "sonner";
-import { computeSlots, formatDateBR, toDateString, minutesToTime, timeToMinutes } from "@/lib/booking-utils";
+import { computeSlotStatuses, formatDateBR, toDateString, minutesToTime, timeToMinutes } from "@/lib/booking-utils";
 import { z } from "zod";
 
 export const Route = createFileRoute("/agendar/$serviceId")({
@@ -42,10 +42,10 @@ function BookingPage() {
     },
   });
 
-  const { data: hours } = useQuery({
-    queryKey: ["business_hours"],
+  const { data: weeklySlots } = useQuery({
+    queryKey: ["weekly_slots"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("business_hours").select("*");
+      const { data, error } = await supabase.from("weekly_slots").select("*");
       if (error) throw error;
       return data;
     },
@@ -64,19 +64,18 @@ function BookingPage() {
   const days = useMemo(() => {
     const arr: { date: Date; dateStr: string; available: boolean }[] = [];
     const blockedSet = new Set((blocked ?? []).map((b) => b.blocked_date as string));
-    const hoursByDow = new Map((hours ?? []).map((h) => [h.day_of_week, h]));
+    const openDows = new Set((weeklySlots ?? []).map((s) => s.day_of_week));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     for (let i = 0; i < 45; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const dateStr = toDateString(d);
-      const hh = hoursByDow.get(d.getDay());
-      const available = !!hh && hh.is_open && !blockedSet.has(dateStr);
+      const available = openDows.has(d.getDay()) && !blockedSet.has(dateStr);
       arr.push({ date: d, dateStr, available });
     }
     return arr;
-  }, [hours, blocked]);
+  }, [weeklySlots, blocked]);
 
   // Load booked slots for selected date
   const { data: takenSlots, isLoading: loadingSlots } = useQuery({
@@ -93,22 +92,33 @@ function BookingPage() {
     },
   });
 
+  const { data: overrides } = useQuery({
+    queryKey: ["slot_overrides", selectedDate],
+    enabled: !!selectedDate,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("slot_overrides")
+        .select("slot_time, is_disabled")
+        .eq("slot_date", selectedDate!);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const availableTimes = useMemo(() => {
-    if (!selectedDate || !service || !hours) return [];
+    if (!selectedDate || !service || !weeklySlots) return [];
     const d = new Date(selectedDate + "T00:00:00");
-    const hh = hours.find((h) => h.day_of_week === d.getDay());
-    if (!hh || !hh.is_open) return [];
+    const dayTimes = weeklySlots
+      .filter((s) => s.day_of_week === d.getDay())
+      .map((s) => s.slot_time as string)
+      .sort();
+    if (dayTimes.length === 0) return [];
     const isToday = toDateString(new Date()) === selectedDate;
-    return computeSlots(
-      hh.open_time.slice(0, 5),
-      hh.close_time.slice(0, 5),
-      service.duration_minutes,
-      takenSlots ?? [],
-      30,
-      new Date(),
-      isToday,
-    );
-  }, [selectedDate, service, hours, takenSlots]);
+    const disabled = (overrides ?? []).filter((o) => o.is_disabled).map((o) => o.slot_time as string);
+    return computeSlotStatuses(dayTimes, service.duration_minutes, takenSlots ?? [], disabled, isToday)
+      .filter((s) => s.status === "available")
+      .map((s) => s.time);
+  }, [selectedDate, service, weeklySlots, takenSlots, overrides]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

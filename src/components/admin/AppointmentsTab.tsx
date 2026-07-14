@@ -41,9 +41,17 @@ export default function AppointmentsTab() {
 
   async function cancel(id: string) {
     if (!confirm("Cancelar este agendamento?")) return;
-    const { error } = await supabase.from("appointments").update({ status: "cancelled" }).eq("id", id);
+    const { error } = await supabase.from("appointments").update({
+      status: "cancelled",
+      cancelled_by: "admin",
+      cancelled_at: new Date().toISOString(),
+      cancellation_notified: false,
+    }).eq("id", id);
     if (error) toast.error("Erro ao cancelar");
-    else { toast.success("Agendamento cancelado"); qc.invalidateQueries({ queryKey: ["admin_appointments"] }); }
+    else {
+      toast.success("Agendamento cancelado — horário liberado");
+      qc.invalidateQueries({ queryKey: ["admin_appointments"] });
+    }
   }
 
   return (
