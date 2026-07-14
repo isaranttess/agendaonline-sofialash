@@ -17,6 +17,9 @@ export type Database = {
       appointments: {
         Row: {
           appointment_date: string
+          cancellation_notified: boolean
+          cancelled_at: string | null
+          cancelled_by: string | null
           client_name: string
           client_phone: string
           created_at: string
@@ -29,6 +32,9 @@ export type Database = {
         }
         Insert: {
           appointment_date: string
+          cancellation_notified?: boolean
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           client_name: string
           client_phone: string
           created_at?: string
@@ -41,6 +47,9 @@ export type Database = {
         }
         Update: {
           appointment_date?: string
+          cancellation_notified?: boolean
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           client_name?: string
           client_phone?: string
           created_at?: string
@@ -145,6 +154,33 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          is_disabled: boolean
+          reason: string | null
+          slot_date: string
+          slot_time: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_disabled?: boolean
+          reason?: string | null
+          slot_date: string
+          slot_time: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_disabled?: boolean
+          reason?: string | null
+          slot_date?: string
+          slot_time?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -163,6 +199,27 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_slots: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          id: string
+          slot_time: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          id?: string
+          slot_time: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          slot_time?: string
         }
         Relationships: []
       }
