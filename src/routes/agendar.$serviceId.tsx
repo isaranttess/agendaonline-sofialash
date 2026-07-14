@@ -83,12 +83,9 @@ function BookingPage() {
     enabled: !!selectedDate,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("appointments")
-        .select("start_time, end_time")
-        .eq("appointment_date", selectedDate!)
-        .eq("status", "confirmed");
+        .rpc("get_taken_slots", { p_date: selectedDate! });
       if (error) throw error;
-      return data;
+      return (data ?? []) as { start_time: string; end_time: string }[];
     },
   });
 
@@ -130,44 +127,24 @@ function BookingPage() {
     if (!service || !selectedDate || !selectedTime) return;
     setSubmitting(true);
 
-    const startMin = timeToMinutes(selectedTime);
-    const endTime = minutesToTime(startMin + service.duration_minutes);
-
-    // Re-check availability
-    const { data: conflict } = await supabase
-      .from("appointments")
-      .select("id")
-      .eq("appointment_date", selectedDate)
-      .eq("status", "confirmed")
-      .lt("start_time", endTime)
-      .gt("end_time", selectedTime);
-
-    if (conflict && conflict.length > 0) {
-      toast.error("Ops! Esse horário acabou de ser reservado. Escolha outro.");
-      setSubmitting(false);
-      setStep("time");
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from("appointments")
-      .insert({
-        service_id: service.id,
-        client_name: parsed.data.name,
-        client_phone: parsed.data.phone,
-        appointment_date: selectedDate,
-        start_time: selectedTime,
-        end_time: endTime,
-      })
-      .select("id")
-      .single();
+    const { data, error } = await supabase.rpc("create_appointment", {
+      p_service_id: service.id,
+      p_client_name: parsed.data.name,
+      p_client_phone: parsed.data.phone,
+      p_date: selectedDate,
+      p_start_time: selectedTime,
+    });
 
     setSubmitting(false);
     if (error) {
-      toast.error("Não foi possível confirmar. Tente novamente.");
+      const msg = error.message?.includes("Horário") || error.message?.includes("Data") || error.message?.includes("Serviço") || error.message?.includes("Nome") || error.message?.includes("Telefone")
+        ? error.message
+        : "Não foi possível confirmar. Tente novamente.";
+      toast.error(msg);
+      if (msg.toLowerCase().includes("horário")) setStep("time");
       return;
     }
-    setConfirmation({ id: data.id });
+    setConfirmation({ id: data as string });
     setStep("done");
   }
 

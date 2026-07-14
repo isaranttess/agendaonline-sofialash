@@ -228,6 +228,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_appointment: {
+        Args: {
+          p_client_name: string
+          p_client_phone: string
+          p_date: string
+          p_service_id: string
+          p_start_time: string
+        }
+        Returns: string
+      }
+      get_taken_slots: {
+        Args: { p_date: string }
+        Returns: {
+          end_time: string
+          start_time: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
